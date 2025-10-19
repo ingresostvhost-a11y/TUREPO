@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Estamos por iniciar</title>
+  <link rel="preload" href="/assets/audio/click.mp3" as="audio">
+  <style>
+    :root{color-scheme:light dark}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;display:grid;min-height:100dvh;grid-template-rows:auto 1fr auto;background:#0b0e13;color:#e6e6e6}
+    header,footer{padding:16px 20px;background:#0f131a;border-bottom:1px solid #1e2633}
+    footer{border-top:1px solid #1e2633;border-bottom:none}
+    .wrap{display:grid;place-items:center;padding:32px}
+    .card{max-width:720px;width:100%;padding:28px;border:1px solid #1e2633;border-radius:16px;background:#10151f}
+    .logo{height:40px}
+    .timer{font-size:56px;letter-spacing:2px;margin:12px 0 8px}
+    .muted{opacity:.78}
+    .cta{margin-top:18px;display:inline-grid;place-items:center;padding:12px 18px;border-radius:12px;background:#ffd54d;color:#1a1200;font-weight:700;border:0;cursor:pointer}
+    .cta:active{transform:translateY(1px)}
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/assets/logo.svg" alt="IngresosAI" class="logo" />
+  </header>
+
+  <main class="wrap">
+    <section class="card" id="waitroom"
+      data-seconds="600"                <!-- 10 minutos -->
+      data-redirect="/webinar.html"     <!-- cambia aquí el destino -->
+      data-sound="/assets/audio/click.mp3">
+      <h1>¡Estamos por iniciar!</h1>
+      <p class="muted">Mantente en esta página. Cuando el contador llegue a 0, entrarás automáticamente.</p>
+      <div class="timer" id="countdown">10:00</div>
+      <button id="soundBtn" class="cta" type="button">Probar sonido / Estoy listo</button>
+    </section>
+  </main>
+
+  <footer>
+    <small>© <span id="y"></span> IngresosAI — Todos los derechos reservados.</small>
+  </footer>
+
+  <audio id="snd" preload="auto"></audio>
+  <script>
+    const y = document.getElementById('y'); y.textContent = new Date().getFullYear();
+    const el = document.getElementById('waitroom');
+    const total = Number(el.dataset.seconds || 600);
+    const to    = String(el.dataset.redirect || '/');
+    const sndEl = document.getElementById('snd');
+    sndEl.src   = el.dataset.sound || '/assets/audio/click.mp3';
+    const out   = document.getElementById('countdown');
+    let left    = total;
+    function fmt(s){ const m=Math.floor(s/60), r=String(s%60).padStart(2,'0'); return `${m}:${r}`; }
+    out.textContent = fmt(left);
+    const tick = setInterval(() => {
+      left--; out.textContent = fmt(left);
+      if (left <= 0) { clearInterval(tick); window.location.assign(to); }
+    }, 1000);
+    document.getElementById('soundBtn').addEventListener('click', async () => {
+      try { await sndEl.play(); } catch(_) {}
+    });
+  </script>
+</body>
+</html>
