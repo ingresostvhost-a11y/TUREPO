@@ -1,116 +1,143 @@
-<body class="min-h-screen bg-[#0b0f1a] text-white">
-  <!-- Header con logo -->
-  <header class="w-full border-b border-white/10 bg-black/30 backdrop-blur">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-      <img src="/robot-ingresosai.png" alt="IngresosAI" width="40" height="40" style="border-radius:8px" />
-      <strong style="font-size:1.1rem;letter-spacing:.3px;">IngresosAI</strong>
-    </div>
-  </header>
+cat > espera.html <<'HTML'
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sala de espera | IngresosAI</title>
+  <style>
+    :root { --bg:#0b0f1a; --card:#0f1526; --border:rgba(255,255,255,.12); --muted:rgba(255,255,255,.8); --brand:#ffd400; }
+    * { box-sizing:border-box; }
+    html, body { height:100%; }
+    body {
+      margin:0; background:var(--bg); color:#fff;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;
+      /* Centro absoluto en toda la pantalla */
+      display:grid; place-items:center; min-height:100vh;
+      padding:24px;
+    }
+    /* Contenedor centrado SIEMPRE */
+    .frame {
+      width:min(980px,96vw);
+      margin:0 auto;
+    }
+    /* Card centrada y con borde redondeado */
+    .card {
+      border:1px solid var(--border);
+      border-radius:24px;
+      background:var(--card);
+      margin:0 auto;            /* <- centra */
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .inner {
+      padding:36px 32px 28px;
+      display:flex; flex-direction:column; align-items:center; gap:20px;
+    }
+    /* Logo GRANDE al centro (similar preview Zoom/Goto) */
+    .logo-main {
+      width:min(560px,82vw);  /* <- ajusta aquí el tamaño del logo */
+      height:auto; display:block; border-radius:20px;
+    }
+    .timer {
+      font-size:2.4rem; font-weight:800; letter-spacing:.5px;
+    }
+    .row { display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; }
+    .btn { padding:12px 22px; border-radius:12px; cursor:pointer; font-weight:800; }
+    .btn-primary { background:var(--brand); color:#1a1a1a; border:none; }
+    .btn-ghost   { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.3); }
+    .note { color:var(--muted); font-size:1rem; text-align:center; max-width:620px; }
+    audio { width:100%; max-width:620px; }
 
-  <!-- Contenido -->
-  <main class="max-w-3xl mx-auto px-4 py-8">
-    <section id="waitroom"
-      data-seconds="600"                 <!-- 10 min; ajusta si quieres -->
-      data-redirect="/webinar.html">     <!-- destino al llegar a 0 -->
-      <!-- Media principal -->
-      <div style="border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;background:#0f1526">
-        <video id="introVideo" width="100%" preload="metadata" poster="/thumbnail2.jpg" style="display:block">
-          <source src="/Tu_Tambien_Puedes_Construir_Tu_Futuro.mp4" type="video/mp4" />
-          Tu navegador no soporta video HTML5.
-        </video>
+    /* Footer pegado a la parte baja de la tarjeta, más alto y limpio */
+    .footer {
+      border-top:1px solid var(--border);
+      padding:18px 24px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .brand img { width:44px; height:44px; border-radius:12px; display:block; }
+    .promo { border-radius:12px; max-width:300px; height:54px; object-fit:cover; }
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
 
-        <!-- Botonera -->
-        <div style="padding:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
-          <div>
-            <div style="opacity:.8;font-size:.9rem;margin-bottom:4px">El webinar inicia en</div>
-            <div id="count" style="font-size:1.6rem;font-weight:700;letter-spacing:.5px">--:--</div>
+  <main class="frame">
+    <section id="waitroom" aria-labelledby="waitroom-title"
+             data-seconds="600" data-redirect="/webinar-room.php">
+      <h1 id="waitroom-title" class="sr-only">Sala de espera del webinar</h1>
+
+      <div class="card" role="region" aria-label="Sala de espera">
+        <div class="inner">
+          <!-- LOGO CENTRADO Y GRANDE -->
+          <img class="logo-main" src="/robot-ingresosai.png" alt="IngresosAI" />
+
+          <!-- TIMER -->
+          <div id="count" class="timer" aria-live="polite" aria-atomic="true">--:--</div>
+
+          <!-- CONTROLES (SOLO AUDIO) -->
+          <div class="row">
+            <button id="btnPlay"  class="btn btn-primary">▶ Reproducir audio</button>
+            <button id="btnPause" class="btn btn-ghost">🔇 Pausar</button>
           </div>
 
-          <div style="display:flex;gap:10px;align-items:center">
-            <button id="btnPlay"
-              style="background:#ffd400;color:#1a1a1a;padding:12px 18px;border-radius:10px;font-weight:800;cursor:pointer;border:none">
-              ▶ Reproducir audio / video
-            </button>
-            <button id="btnSilence"
-              style="background:transparent;color:#fff;padding:12px 18px;border-radius:10px;cursor:pointer;border:1px solid rgba(255,255,255,.3)">
-              🔇 Silenciar
-            </button>
+          <!-- AUDIO (oculto hasta reproducir) -->
+          <audio id="introAudio" preload="metadata" style="display:none">
+            <!-- Si tienes mp3, cámbialo: /audio/intro.mp3 type="audio/mpeg" -->
+            <source src="/Tu_Tambien_Puedes_Construir_Tu_Futuro.mp4" type="audio/mp4" />
+            Tu navegador no soporta audio HTML5.
+          </audio>
+
+          <p class="note">Mantén esta ventana abierta. Te redirigiremos automáticamente cuando comience el evento.</p>
+        </div>
+
+        <!-- FOOTER MÁS ABAJO Y MÁS GRANDE -->
+        <div class="footer">
+          <div class="brand">
+            <img src="/robot-ingresosai.png" alt="IngresosAI logo" />
+            <span style="opacity:.85">© IngresosAI</span>
           </div>
+          <img class="promo" src="/thumbnail1.jpg" alt="Promoción" />
         </div>
       </div>
-
-      <!-- Fallback solo audio (por si prefieres audio en lugar de video) -->
-      <audio id="introAudio" preload="metadata" style="display:none">
-        <source src="/Tu_Tambien_Puedes_Construir_Tu_Futuro.mp4" type="audio/mp4" />
-      </audio>
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="w-full mt-10 border-t border-white/10 bg-black/30 backdrop-blur">
-    <div class="max-w-5xl mx-auto px-4 py-6" style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap">
-      <div style="display:flex;gap:10px;align-items:center">
-        <img src="/robot-ingresosai.png" alt="IngresosAI" width="28" height="28" style="border-radius:6px" />
-        <span style="opacity:.8;font-size:.9rem">© IngresosAI</span>
-      </div>
-      <img src="/thumbnail1.jpg" alt="Promoción" height="40" style="border-radius:8px;max-width:220px;object-fit:cover" />
+  <noscript>
+    <div style="max-width:720px;margin:1rem auto;padding:1rem;border:1px solid #444;border-radius:8px">
+      Activa JavaScript para la cuenta regresiva y la reproducción. Mientras tanto,
+      <a href="/webinar-room.php">entra aquí al webinar</a>.
     </div>
-  </footer>
+  </noscript>
 
-  <!-- JS: contador + reproducción + redirección -->
   <script>
-    (function () {
-      const root  = document.getElementById('waitroom');
-      const video = document.getElementById('introVideo');
-      const audio = document.getElementById('introAudio'); // fallback
-      const btnPlay = document.getElementById('btnPlay');
-      const btnSilence = document.getElementById('btnSilence');
-      const countEl = document.getElementById('count');
+  (function () {
+    const root    = document.getElementById('waitroom');
+    const audio   = document.getElementById('introAudio');
+    const btnPlay = document.getElementById('btnPlay');
+    const btnPau  = document.getElementById('btnPause');
+    const countEl = document.getElementById('count');
 
-      const seconds  = parseInt(root.getAttribute('data-seconds') || '600', 10);
-      const redirect = root.getAttribute('data-redirect') || '/';
+    const seconds  = parseInt(root.getAttribute('data-seconds') || '600', 10);
+    const redirect = root.getAttribute('data-redirect') || '/webinar-room.php';
 
-      // Contador mm:ss
-      let remaining = seconds;
-      function fmt(n){ return String(n).padStart(2,'0'); }
-      function tick() {
-        const m = Math.floor(remaining / 60);
-        const s = remaining % 60;
-        countEl.textContent = `${fmt(m)}:${fmt(s)}`;
-        if (remaining <= 0) {
-          window.location.href = redirect;
-          return;
-        }
-        remaining -= 1;
-      }
-      tick();
-      setInterval(tick, 1000);
+    // Contador + redirect
+    let remaining = seconds;
+    const fmt = n => String(n).padStart(2,'0');
+    const tick = () => {
+      const m = Math.floor(remaining/60), s = remaining%60;
+      countEl.textContent = `${fmt(m)}:${fmt(s)}`;
+      if (remaining <= 0) { window.location.href = redirect; return; }
+      remaining -= 1;
+    };
+    tick(); setInterval(tick, 1000);
 
-      // Reproducción controlada por clic del usuario (evita bloqueos del navegador)
-      let usingVideo = true; // por defecto usa el <video>
-      btnPlay.addEventListener('click', async () => {
-        try {
-          if (usingVideo) {
-            video.muted = false;        // activa sonido
-            await video.play();
-          } else {
-            await audio.play();
-          }
-        } catch (e) {
-          console.warn('Reproducción bloqueada:', e);
-          // Si falla el video, intenta con el audio
-          usingVideo = false;
-          try { await audio.play(); } catch(_) {}
-        }
-      });
-
-      btnSilence.addEventListener('click', () => {
-        if (usingVideo) {
-          video.pause();
-        } else {
-          audio.pause();
-        }
-      });
-    })();
+    // Audio-only
+    const showAudio = () => { audio.style.display = 'block'; };
+    btnPlay.addEventListener('click', () => { showAudio(); audio.play().catch(()=>{}); });
+    btnPau .addEventListener('click', () => { try { audio.pause(); } catch(e){} });
+  })();
   </script>
 </body>
+</html>
+HTML
