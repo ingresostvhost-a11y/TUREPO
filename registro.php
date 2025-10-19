@@ -1,7 +1,7 @@
 <?php
-// ---------------------------------------------
-// registro.php  (endpoint de registro)
-// ---------------------------------------------
+require_once __DIR__ . '/src/lib/env.php';
+require_once __DIR__ . '/src/lib/mailer.php';
+
 
 header('Content-Type: text/plain; charset=UTF-8');
 
