@@ -1,60 +1,71 @@
 <?php
-// --- debug temporal y logging simple ---
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// ---------------------------------------------
+// registro.php  (endpoint de registro)
+// ---------------------------------------------
 
-function logf($msg) {
-  $file = __DIR__ . '/logs/registro.log';
-  @file_put_contents($file, '['.date('c')."] ".$msg.PHP_EOL, FILE_APPEND);
+header('Content-Type: text/plain; charset=UTF-8');
+
+// --- Loader robusto: toma el primer archivo que exista
+function require_first(array $candidates) {
+  foreach ($candidates as $p) {
+    $abs = __DIR__ . '/' . ltrim($p, '/');
+    if (file_exists($abs)) { require_once $abs; return $abs; }
+  }
+  http_response_code(500);
+  echo "bootstrap error: no se encontró ninguno de: " . implode(', ', $candidates);
+  exit;
 }
 
-// Carga env y mailer (rutas relativas a /httpdocs)
-require_once __DIR__ . '/feat/src/lib/env.php';
-require_once __DIR__ . '/feat/src/lib/mailer.php';
+// Carga env y mailer desde la primera ruta disponible (según cómo quedó el deploy)
+require_first(['src/lib/env.php',   'feat/src/lib/env.php']);
+require_first(['src/lib/mailer.php','feat/src/lib/mailer.php']);
 
-try {
-  // Solo aceptar POST
-  if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-    http_response_code(405);
-    echo 'ok';
-    exit;
-  }
+// Logger básico a /logs/registro.log (no bloquea si falla)
+function logf($msg) {
+  @file_put_contents(__DIR__ . '/logs/registro.log', '['.date('c')."] $msg\n", FILE_APPEND);
+}
 
-  // Datos del formulario
-  $nombre   = $_POST['nombre']   ?? '';
-  $email    = $_POST['email']    ?? '';
-  $telefono = $_POST['telefono'] ?? '';
-  $pais     = $_POST['pais']     ?? '';
-  $ciudad   = $_POST['ciudad']   ?? '';
+// --- Solo aceptar POST (mantengo tu comportamiento de devolver 405 y 'ok')
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+  http_response_code(405);
+  echo 'ok';
+  exit;
+}
 
-  // Destinatario y asunto
-  $to      = env_get('MAIL_TO', env_get('MAIL_FROM', 'notificaciones@ingresosai.info'));
-  $subject = 'Nuevo registro en ingresosai.info';
+// --- Datos del formulario
+$nombre   = trim($_POST['nombre']   ?? '');
+$email    = trim($_POST['email']    ?? '');
+$telefono = trim($_POST['telefono'] ?? '');
+$pais     = trim($_POST['pais']     ?? '');
+$ciudad   = trim($_POST['ciudad']   ?? '');
 
-  // Contenido HTML
-  $html = "
-    <h2>Nuevo registro</h2>
-    <ul>
-      <li><b>Nombre:</b> ".htmlspecialchars($nombre)."</li>
-      <li><b>Email:</b> ".htmlspecialchars($email)."</li>
-      <li><b>Teléfono:</b> ".htmlspecialchars($telefono)."</li>
-      <li><b>País:</b> ".htmlspecialchars($pais)."</li>
-      <li><b>Ciudad:</b> ".htmlspecialchars($ciudad)."</li>
-    </ul>
-  ";
+// --- Destinatario y asunto
+$to = env_get('MAIL_TO') ?: (env_get('MAIL_FROM') ?: 'notificaciones@ingresosai.info');
+$subject = 'Nuevo registro en ingresosai.info';
 
-  // Envía
-  $ok = send_mail($to, $subject, $html);
+// --- Contenido HTML (simple)
+$esc = fn($s) => htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$html = "
+  <h1>Nuevo registro</h1>
+  <ul>
+    <li><strong>Nombre:</strong> {$esc($nombre)}</li>
+    <li><strong>Email:</strong> {$esc($email)}</li>
+    <li><strong>Teléfono:</strong> {$esc($telefono)}</li>
+    <li><strong>País:</strong> {$esc($pais)}</li>
+    <li><strong>Ciudad:</strong> {$esc($ciudad)}</li>
+  </ul>
+";
 
-  if ($ok) {
-    echo 'ok';
-  } else {
-    logf('send_mail devolvió false');
-    http_response_code(500);
-    echo 'mail_failed';
-  }
-} catch (Throwable $e) {
-  logf('EXCEPTION: '.$e->getMessage().' @ '.$e->getFile().':'.$e->getLine());
+// --- Envío
+$ok = send_mail($to, $subject, $html);
+
+// --- Respuesta HTTP + log
+if ($ok) {
+  http_response_code(200);
+  echo 'ok';
+  logf("OK: {$email} {$nombre} {$telefono} {$pais} {$ciudad}");
+} else {
   http_response_code(500);
   echo 'error';
+  logf("ERROR: fallo al enviar - {$email} {$nombre}");
 }
