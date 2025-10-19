@@ -1,64 +1,116 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Estamos por iniciar</title>
-  <link rel="preload" href="/assets/audio/click.mp3" as="audio">
-  <style>
-    :root{color-scheme:light dark}
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;display:grid;min-height:100dvh;grid-template-rows:auto 1fr auto;background:#0b0e13;color:#e6e6e6}
-    header,footer{padding:16px 20px;background:#0f131a;border-bottom:1px solid #1e2633}
-    footer{border-top:1px solid #1e2633;border-bottom:none}
-    .wrap{display:grid;place-items:center;padding:32px}
-    .card{max-width:720px;width:100%;padding:28px;border:1px solid #1e2633;border-radius:16px;background:#10151f}
-    .logo{height:40px}
-    .timer{font-size:56px;letter-spacing:2px;margin:12px 0 8px}
-    .muted{opacity:.78}
-    .cta{margin-top:18px;display:inline-grid;place-items:center;padding:12px 18px;border-radius:12px;background:#ffd54d;color:#1a1200;font-weight:700;border:0;cursor:pointer}
-    .cta:active{transform:translateY(1px)}
-  </style>
-</head>
-<body>
-  <header>
-    <img src="/assets/logo.svg" alt="IngresosAI" class="logo" />
+<body class="min-h-screen bg-[#0b0f1a] text-white">
+  <!-- Header con logo -->
+  <header class="w-full border-b border-white/10 bg-black/30 backdrop-blur">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+      <img src="/robot-ingresosai.png" alt="IngresosAI" width="40" height="40" style="border-radius:8px" />
+      <strong style="font-size:1.1rem;letter-spacing:.3px;">IngresosAI</strong>
+    </div>
   </header>
 
-  <main class="wrap">
-    <section class="card" id="waitroom"
-      data-seconds="600"                <!-- 10 minutos -->
-      data-redirect="/webinar.html"     <!-- cambia aquí el destino -->
-      data-sound="/assets/audio/click.mp3">
-      <h1>¡Estamos por iniciar!</h1>
-      <p class="muted">Mantente en esta página. Cuando el contador llegue a 0, entrarás automáticamente.</p>
-      <div class="timer" id="countdown">10:00</div>
-      <button id="soundBtn" class="cta" type="button">Probar sonido / Estoy listo</button>
+  <!-- Contenido -->
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <section id="waitroom"
+      data-seconds="600"                 <!-- 10 min; ajusta si quieres -->
+      data-redirect="/webinar.html">     <!-- destino al llegar a 0 -->
+      <!-- Media principal -->
+      <div style="border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;background:#0f1526">
+        <video id="introVideo" width="100%" preload="metadata" poster="/thumbnail2.jpg" style="display:block">
+          <source src="/Tu_Tambien_Puedes_Construir_Tu_Futuro.mp4" type="video/mp4" />
+          Tu navegador no soporta video HTML5.
+        </video>
+
+        <!-- Botonera -->
+        <div style="padding:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+          <div>
+            <div style="opacity:.8;font-size:.9rem;margin-bottom:4px">El webinar inicia en</div>
+            <div id="count" style="font-size:1.6rem;font-weight:700;letter-spacing:.5px">--:--</div>
+          </div>
+
+          <div style="display:flex;gap:10px;align-items:center">
+            <button id="btnPlay"
+              style="background:#ffd400;color:#1a1a1a;padding:12px 18px;border-radius:10px;font-weight:800;cursor:pointer;border:none">
+              ▶ Reproducir audio / video
+            </button>
+            <button id="btnSilence"
+              style="background:transparent;color:#fff;padding:12px 18px;border-radius:10px;cursor:pointer;border:1px solid rgba(255,255,255,.3)">
+              🔇 Silenciar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fallback solo audio (por si prefieres audio en lugar de video) -->
+      <audio id="introAudio" preload="metadata" style="display:none">
+        <source src="/Tu_Tambien_Puedes_Construir_Tu_Futuro.mp4" type="audio/mp4" />
+      </audio>
     </section>
   </main>
 
-  <footer>
-    <small>© <span id="y"></span> IngresosAI — Todos los derechos reservados.</small>
+  <!-- Footer -->
+  <footer class="w-full mt-10 border-t border-white/10 bg-black/30 backdrop-blur">
+    <div class="max-w-5xl mx-auto px-4 py-6" style="display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+      <div style="display:flex;gap:10px;align-items:center">
+        <img src="/robot-ingresosai.png" alt="IngresosAI" width="28" height="28" style="border-radius:6px" />
+        <span style="opacity:.8;font-size:.9rem">© IngresosAI</span>
+      </div>
+      <img src="/thumbnail1.jpg" alt="Promoción" height="40" style="border-radius:8px;max-width:220px;object-fit:cover" />
+    </div>
   </footer>
 
-  <audio id="snd" preload="auto"></audio>
+  <!-- JS: contador + reproducción + redirección -->
   <script>
-    const y = document.getElementById('y'); y.textContent = new Date().getFullYear();
-    const el = document.getElementById('waitroom');
-    const total = Number(el.dataset.seconds || 600);
-    const to    = String(el.dataset.redirect || '/');
-    const sndEl = document.getElementById('snd');
-    sndEl.src   = el.dataset.sound || '/assets/audio/click.mp3';
-    const out   = document.getElementById('countdown');
-    let left    = total;
-    function fmt(s){ const m=Math.floor(s/60), r=String(s%60).padStart(2,'0'); return `${m}:${r}`; }
-    out.textContent = fmt(left);
-    const tick = setInterval(() => {
-      left--; out.textContent = fmt(left);
-      if (left <= 0) { clearInterval(tick); window.location.assign(to); }
-    }, 1000);
-    document.getElementById('soundBtn').addEventListener('click', async () => {
-      try { await sndEl.play(); } catch(_) {}
-    });
+    (function () {
+      const root  = document.getElementById('waitroom');
+      const video = document.getElementById('introVideo');
+      const audio = document.getElementById('introAudio'); // fallback
+      const btnPlay = document.getElementById('btnPlay');
+      const btnSilence = document.getElementById('btnSilence');
+      const countEl = document.getElementById('count');
+
+      const seconds  = parseInt(root.getAttribute('data-seconds') || '600', 10);
+      const redirect = root.getAttribute('data-redirect') || '/';
+
+      // Contador mm:ss
+      let remaining = seconds;
+      function fmt(n){ return String(n).padStart(2,'0'); }
+      function tick() {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        countEl.textContent = `${fmt(m)}:${fmt(s)}`;
+        if (remaining <= 0) {
+          window.location.href = redirect;
+          return;
+        }
+        remaining -= 1;
+      }
+      tick();
+      setInterval(tick, 1000);
+
+      // Reproducción controlada por clic del usuario (evita bloqueos del navegador)
+      let usingVideo = true; // por defecto usa el <video>
+      btnPlay.addEventListener('click', async () => {
+        try {
+          if (usingVideo) {
+            video.muted = false;        // activa sonido
+            await video.play();
+          } else {
+            await audio.play();
+          }
+        } catch (e) {
+          console.warn('Reproducción bloqueada:', e);
+          // Si falla el video, intenta con el audio
+          usingVideo = false;
+          try { await audio.play(); } catch(_) {}
+        }
+      });
+
+      btnSilence.addEventListener('click', () => {
+        if (usingVideo) {
+          video.pause();
+        } else {
+          audio.pause();
+        }
+      });
+    })();
   </script>
 </body>
-</html>
