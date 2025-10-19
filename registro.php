@@ -1,7 +1,7 @@
 <?php
-// --- debug temporal y logging simple ---
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// Carga env y mailer desde /src/lib
+require_once __DIR__ . '/src/lib/env.php';
+require_once __DIR__ . '/src/lib/mailer.php';
 
 function logf($msg) {
   $file = __DIR__ . '/logs/registro.log';
