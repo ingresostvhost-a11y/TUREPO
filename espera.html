@@ -1,4 +1,3 @@
-cat > espera.html <<'HTML'
 <!doctype html>
 <html lang="es">
 <head>
@@ -6,138 +5,134 @@ cat > espera.html <<'HTML'
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sala de espera | IngresosAI</title>
   <style>
-    :root { --bg:#0b0f1a; --card:#0f1526; --border:rgba(255,255,255,.12); --muted:rgba(255,255,255,.8); --brand:#ffd400; }
-    * { box-sizing:border-box; }
-    html, body { height:100%; }
-    body {
-      margin:0; background:var(--bg); color:#fff;
+    :root {
+      --bg:#0b1822; --card:#0f2433; --shadow:0 14px 40px rgba(0,0,0,.35);
+      --muted:rgba(255,255,255,.85); --border:rgba(255,255,255,.12); --brand:#ffd400;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:#fff;
       font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;
-      /* Centro absoluto en toda la pantalla */
-      display:grid; place-items:center; min-height:100vh;
-      padding:24px;
+      display:grid;place-items:center;min-height:100vh;padding:20px;
     }
-    /* Contenedor centrado SIEMPRE */
-    .frame {
-      width:min(980px,96vw);
-      margin:0 auto;
+    .frame{width:min(980px,96vw);margin:0 auto}
+    .card{
+      border:1px solid var(--border);border-radius:22px;background:var(--card);
+      box-shadow:var(--shadow);margin:0 auto;overflow:hidden;
     }
-    /* Card centrada y con borde redondeado */
-    .card {
-      border:1px solid var(--border);
-      border-radius:24px;
-      background:var(--card);
-      margin:0 auto;            /* <- centra */
-      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    .inner{padding:28px 28px 24px;display:flex;flex-direction:column;align-items:center;gap:18px}
+    .logo{width:min(520px,82vw);height:auto;display:block;border-radius:18px}
+    .title{margin:0;font-size:clamp(20px,3.2vw,32px);font-weight:900}
+    .sub{margin:0;color:var(--muted)}
+    .timer{font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:.5px}
+    .btn{
+      appearance:none;border:none;cursor:pointer;font-weight:800;
+      padding:12px 20px;border-radius:12px;background:var(--brand);color:#121212;
+      box-shadow:0 6px 20px rgba(255,212,0,.2);
     }
-    .inner {
-      padding:36px 32px 28px;
-      display:flex; flex-direction:column; align-items:center; gap:20px;
+    .footer{
+      border-top:1px solid var(--border);padding:16px 22px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap
     }
-    /* Logo GRANDE al centro (similar preview Zoom/Goto) */
-    .logo-main {
-      width:min(560px,82vw);  /* <- ajusta aquí el tamaño del logo */
-      height:auto; display:block; border-radius:20px;
+    .brand{display:flex;gap:10px;align-items:center;opacity:.9}
+    .brand img{width:40px;height:40px;border-radius:10px}
+    .promo{border-radius:10px;max-width:280px;height:50px;object-fit:cover}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+    /* Estado “redirigiendo” */
+    .redirecting{
+      position:absolute;inset:0;display:grid;place-items:center;
+      background:rgba(0,0,0,.45);backdrop-filter:blur(2px)
     }
-    .timer {
-      font-size:2.4rem; font-weight:800; letter-spacing:.5px;
+    .redirecting .bubble{
+      background:#0b1522;border:1px solid var(--border);border-radius:14px;
+      padding:16px 18px;text-align:center;box-shadow:var(--shadow)
     }
-    .row { display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; }
-    .btn { padding:12px 22px; border-radius:12px; cursor:pointer; font-weight:800; }
-    .btn-primary { background:var(--brand); color:#1a1a1a; border:none; }
-    .btn-ghost   { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.3); }
-    .note { color:var(--muted); font-size:1rem; text-align:center; max-width:620px; }
-    audio { width:100%; max-width:620px; }
-
-    /* Footer pegado a la parte baja de la tarjeta, más alto y limpio */
-    .footer {
-      border-top:1px solid var(--border);
-      padding:18px 24px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    }
-    .brand { display:flex; gap:12px; align-items:center; }
-    .brand img { width:44px; height:44px; border-radius:12px; display:block; }
-    .promo { border-radius:12px; max-width:300px; height:54px; object-fit:cover; }
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   </style>
 </head>
 <body>
-
   <main class="frame">
-    <section id="waitroom" aria-labelledby="waitroom-title"
-             data-seconds="600" data-redirect="/webinar-room.php">
-      <h1 id="waitroom-title" class="sr-only">Sala de espera del webinar</h1>
-
+    <!-- Cambia el tiempo aquí (segundos) y el destino del redirect -->
+    <section id="waitroom" data-seconds="600" data-redirect="/webinar-room.php" aria-labelledby="t1">
       <div class="card" role="region" aria-label="Sala de espera">
         <div class="inner">
-          <!-- LOGO CENTRADO Y GRANDE -->
-          <img class="logo-main" src="/robot-ingresosai.png" alt="IngresosAI" />
+          <img class="logo" src="/robot-ingresosai.png" alt="IngresosAI" />
+          <h2 id="t1" class="title">¡Ya casi empezamos!</h2>
+          <p class="sub">Mantén esta ventana abierta. El webinar inicia en:</p>
+          <div id="count" class="timer" aria-live="polite" aria-atomic="true">00:10:00</div>
+          <button id="playBtn" class="btn" type="button">Activar audio</button>
 
-          <!-- TIMER -->
-          <div id="count" class="timer" aria-live="polite" aria-atomic="true">--:--</div>
-
-          <!-- CONTROLES (SOLO AUDIO) -->
-          <div class="row">
-            <button id="btnPlay"  class="btn btn-primary">▶ Reproducir audio</button>
-            <button id="btnPause" class="btn btn-ghost">🔇 Pausar</button>
-          </div>
-
-          <!-- AUDIO (oculto hasta reproducir) -->
+          <!-- Audio oculto hasta click (política de autoplay) -->
           <audio id="introAudio" preload="metadata" style="display:none">
-            <!-- Si tienes mp3, cámbialo: /audio/intro.mp3 type="audio/mpeg" -->
+            <!-- Cambia por tu audio si tienes MP3: <source src="/assets/audio/intro.mp3" type="audio/mpeg" /> -->
             <source src="/Tu_Tambien_Puedes_Construir_Tu_Futuro.mp4" type="audio/mp4" />
             Tu navegador no soporta audio HTML5.
           </audio>
-
-          <p class="note">Mantén esta ventana abierta. Te redirigiremos automáticamente cuando comience el evento.</p>
         </div>
 
-        <!-- FOOTER MÁS ABAJO Y MÁS GRANDE -->
         <div class="footer">
-          <div class="brand">
-            <img src="/robot-ingresosai.png" alt="IngresosAI logo" />
-            <span style="opacity:.85">© IngresosAI</span>
-          </div>
+          <div class="brand"><img src="/robot-ingresosai.png" alt="IngresosAI" /><span>© IngresosAI</span></div>
           <img class="promo" src="/thumbnail1.jpg" alt="Promoción" />
+        </div>
+
+        <!-- Capa para estado “redirigiendo…” -->
+        <div id="redir" class="redirecting" style="display:none">
+          <div class="bubble">
+            <img src="/robot-ingresosai.png" alt="" style="width:60px;height:60px;border-radius:12px;margin-bottom:8px;display:block;margin-inline:auto" />
+            <div style="font-weight:800;margin-bottom:4px">Redirigiendo…</div>
+            <div style="opacity:.85">Te llevaremos a la sala en un instante</div>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <noscript>
-    <div style="max-width:720px;margin:1rem auto;padding:1rem;border:1px solid #444;border-radius:8px">
-      Activa JavaScript para la cuenta regresiva y la reproducción. Mientras tanto,
-      <a href="/webinar-room.php">entra aquí al webinar</a>.
-    </div>
-  </noscript>
-
   <script>
   (function () {
-    const root    = document.getElementById('waitroom');
-    const audio   = document.getElementById('introAudio');
-    const btnPlay = document.getElementById('btnPlay');
-    const btnPau  = document.getElementById('btnPause');
-    const countEl = document.getElementById('count');
+    const root   = document.getElementById('waitroom');
+    const count  = document.getElementById('count');
+    const btn    = document.getElementById('playBtn');
+    const audio  = document.getElementById('introAudio');
+    const redir  = document.getElementById('redir');
 
-    const seconds  = parseInt(root.getAttribute('data-seconds') || '600', 10);
+    // Lee configuración desde atributos (seguridad: defaults)
+    const seconds  = Math.max(0, parseInt(root.getAttribute('data-seconds') || '600', 10));
     const redirect = root.getAttribute('data-redirect') || '/webinar-room.php';
 
-    // Contador + redirect
-    let remaining = seconds;
-    const fmt = n => String(n).padStart(2,'0');
-    const tick = () => {
-      const m = Math.floor(remaining/60), s = remaining%60;
-      countEl.textContent = `${fmt(m)}:${fmt(s)}`;
-      if (remaining <= 0) { window.location.href = redirect; return; }
-      remaining -= 1;
-    };
-    tick(); setInterval(tick, 1000);
+    // Contador robusto basado en tiempo real (no se “salta” si el tab se pausa)
+    const deadline = Date.now() + seconds * 1000;
+    function pad(n){ return String(n).padStart(2,'0'); }
 
-    // Audio-only
-    const showAudio = () => { audio.style.display = 'block'; };
-    btnPlay.addEventListener('click', () => { showAudio(); audio.play().catch(()=>{}); });
-    btnPau .addEventListener('click', () => { try { audio.pause(); } catch(e){} });
+    function update() {
+      const remainMs = Math.max(0, deadline - Date.now());
+      const t = Math.round(remainMs / 1000);
+      const m = Math.floor(t / 60), s = t % 60;
+      count.textContent = `${pad(m)}:${pad(s)}`;
+
+      if (t <= 0) {
+        // Muestra estado visual y navega con un pequeño retardo para pintar el UI
+        redir.style.display = 'grid';
+        setTimeout(() => { window.location.assign(redirect); }, 900);
+        return;
+      }
+      // Actualiza cada 250ms para suavidad; usa setTimeout (mejor que setInterval en pestañas inactivas)
+      setTimeout(update, 250);
+    }
+    update();
+
+    // Botón de audio (solo reproduce si el usuario hizo click)
+    btn.addEventListener('click', async () => {
+      try {
+        audio.style.display = 'block';
+        await audio.play();
+        btn.textContent = 'Audio reproduciéndose';
+        btn.disabled = true;
+      } catch (e) {
+        // Si falla (bloqueo del navegador o archivo inexistente) informa
+        alert('No se pudo iniciar el audio. Verifica el volumen o el archivo de audio.');
+      }
+    });
   })();
   </script>
 </body>
 </html>
-HTML
